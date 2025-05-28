@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# 📄 RAG-based Document QA API (Django + Gemini + ChromaDB)
 
-First, run the development server:
+[Backend Repo](https://example.com)
 
+This project implements a document upload and question-answering (QA) system using:
+
+- **Django** + **Django REST Framework** for the API backend
+- **Gemini 1.5 Flash** for question answering (via `google-generativeai`)
+- **ChromaDB** as the vector store
+- Fake embeddings (as Gemini doesn't provide native embeddings)
+
+## 📦 Features
+
+- Upload `.txt` files
+- Automatically chunk and embed documents into ChromaDB
+- Ask questions against uploaded documents
+- Retrieve answers from the most relevant chunks using Gemini
+
+---
+
+## ⚙️ API Endpoints
+
+### 🔹 1. Upload Document
+
+**POST** `/api/documents/upload/`
+
+Upload a `.txt` file which gets chunked, embedded, and indexed in ChromaDB.
+
+#### Request (FormData):
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+file: document.txt
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### Example:
+```bash
+curl -X POST http://localhost:8000/api/documents/upload/   -F "file=@sample.txt"
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+#### Response:
+```json
+{
+  "message": "Uploaded and processing started",
+  "document_id": 1
+}
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+### 🔹 2. List All Documents
 
-To learn more about Next.js, take a look at the following resources:
+**GET** `/api/documents/`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Returns a list of all uploaded documents with metadata.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+#### Example:
+```bash
+curl http://localhost:8000/api/documents/
+```
 
-## Deploy on Vercel
+#### Response:
+```json
+[
+  {
+    "id": 1,
+    "title": "sample.txt",
+    "file_type": "txt",
+    "file_size": 2048,
+    "status": "completed",
+    "processed_at": "2025-05-28T08:34:23Z"
+  }
+]
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🔹 3. Ask a Question
+
+**POST** `/api/ask/`
+
+Ask a natural language question about a previously uploaded document.
+
+#### Request Body:
+```json
+{
+  "document_id": 1,
+  "question": "What is the purpose of mitosis?",
+  "top_k": 3
+}
+```
+
+#### Example:
+```bash
+curl -X POST http://localhost:8000/api/ask/   -H "Content-Type: application/json"   -d '{"document_id": 1, "question": "What is cell division?"}'
+```
+
+#### Response:
+```json
+{
+  "answer": "Cell division is the process by which a cell divides into two daughter cells..."
+}
+```
+
+
+## 📁 Project Structure
+
+```
+/api
+  ├── models.py         # Document & DocumentChunk models
+  ├── views.py          # Upload, list, ask question endpoints
+  ├── rag_engine.py     # ChromaDB + Gemini chunking & QA logic
+  ├── serializers.py
+```
+
+---
+
+
+
+## ✨ Credits
+
+Built with ❤️ using Django, Gemini, ChromaDB, and Tailwind + Next.js frontend.
